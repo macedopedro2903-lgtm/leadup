@@ -5,7 +5,19 @@ const COOKIE = 'leadup_wa_connect_state'
 
 export function sameOrigin(req: NextRequest): boolean {
   const origin = req.headers.get('origin')
-  return Boolean(origin && origin === req.nextUrl.origin)
+  // A reverse proxy can expose HTTPS while NextRequest uses an internal origin.
+  // Trust only administrator configuration, never forwarded-host headers.
+  const configured = process.env.LEADUP_PUBLIC_ORIGIN
+  let expected = req.nextUrl.origin
+  if (configured) {
+    try {
+      const url = new URL(configured)
+      if (url.username || url.password || url.search || url.hash || url.pathname !== '/' ||
+          (url.protocol !== 'https:' && !(url.protocol === 'http:' && ['localhost','127.0.0.1'].includes(url.hostname)))) return false
+      expected = url.origin
+    } catch { return false }
+  }
+  return Boolean(origin && origin === expected)
 }
 
 export function freshNonce(userId: string) {
@@ -20,7 +32,9 @@ export function freshNonce(userId: string) {
 export function validNonce(userId: string, cookie: string | undefined, nonce: string): boolean {
   const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET
   if (!secret || !cookie || !/^[a-f0-9]{64}$/.test(nonce)) return false
-  const [ts, fromCookie, signature] = cookie.split('.')
+  const parts = cookie.split('.')
+  if (parts.length !== 3) return false
+  const [ts, fromCookie, signature] = parts
   if (!ts || !fromCookie || !signature || fromCookie !== nonce || !/^\d{13}$/.test(ts) || Date.now()-Number(ts)>10*60*1000 || Date.now()<Number(ts)) return false
   const computed = createHmac('sha256', secret).update(`${userId}.${ts}.${nonce}`).digest('hex')
   if (!/^[a-f0-9]{64}$/.test(signature)) return false

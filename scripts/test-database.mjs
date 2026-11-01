@@ -21,7 +21,7 @@ const ownedIds = []
 let stage = 'startup', checks = 0
 const child = spawn(process.execPath, ['node_modules/next/dist/bin/next','start','--hostname','127.0.0.1','--port','3005'], {
   env: {...process.env, NEXT_DIST_DIR:'.build', AUTH_SECRET:'local-session-test-not-production',
-    NEXTAUTH_SECRET:'local-session-test-not-production', NEXTAUTH_URL:base, AUTH_URL:base,
+    NEXTAUTH_SECRET:'local-session-test-not-production', NEXTAUTH_URL:base, AUTH_URL:base, LEADUP_PUBLIC_ORIGIN:base,
     ABACUSAI_API_KEY:'', META_APP_ID:'', META_EMBEDDED_SIGNUP_CONFIG_ID:'', META_GRAPH_API_VERSION:'',
     META_APP_SECRET:secret, META_WEBHOOK_VERIFY_TOKEN:'local-verify-only',
     WHATSAPP_TOKEN_ENCRYPTION_KEY:'', NEXT_TELEMETRY_DISABLED:'1'},
@@ -201,8 +201,12 @@ try {
     pass(stage)
   }
   console.log('DATABASE INTEGRATION PASS',checks)
-} catch {
+} catch (error) {
   console.error('DATABASE INTEGRATION FAIL at',stage)
+  if (typeof error.actual === 'number' || typeof error.expected === 'number') {
+    console.error('Status/count actual:', typeof error.actual === 'number' ? error.actual : 'non-numeric',
+      'expected:', typeof error.expected === 'number' ? error.expected : 'non-numeric')
+  }
   writeFileSync('../database-server.log',serverLog,{mode:0o600})
   process.exitCode=1
 } finally {
