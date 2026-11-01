@@ -51,7 +51,7 @@ export async function POST(req: Request) {
       service: lead.service,
       value: lead.value,
       status: lead.status,
-      daysSinceContact: daysSince(lead.updatedAt),
+      daysSinceContact: daysSince(lead.lastContactAt ?? lead.createdAt),
       notes: lead.notes,
       tone,
       businessName: user.businessName,
@@ -62,8 +62,8 @@ export async function POST(req: Request) {
 
     const remaining = Math.max(0, aiGenerations - (used + 1))
     return NextResponse.json({ message, remaining })
-  } catch (err) {
-    console.error('[ai/followup] error', err)
+  } catch {
+    console.error('[ai/followup] request failed')
     return NextResponse.json(
       {
         error: 'Não conseguimos gerar sua mensagem agora. Você pode escrever uma mensagem manualmente ou tentar novamente.',

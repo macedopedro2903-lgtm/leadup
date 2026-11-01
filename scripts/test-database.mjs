@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { spawn } from 'node:child_process'
-import { createHmac, randomUUID } from 'node:crypto'
+import { createHash, createHmac, randomBytes, randomUUID } from 'node:crypto'
 import { readFileSync, writeFileSync } from 'node:fs'
 import { PrismaClient } from '@prisma/client'
 import * as XLSX from 'xlsx'
@@ -88,7 +88,7 @@ try {
   begin('signup and login A'); const userA = await login(a,emails[0],'Validation A'); pass(stage)
   begin('signup and login B'); const userB = await login(b,emails[1],'Validation B'); pass(stage)
   begin('authenticated pages')
-  for(const path of ['/app','/app/leads','/app/funil','/app/followups','/app/configuracoes','/app/importar']) {
+  for(const path of ['/app','/app/leads','/app/funil','/app/followups','/app/configuracoes','/app/importar','/app/orcamentos']) {
     assert.equal((await a(path)).status,200)
   }
   pass(stage)
@@ -146,6 +146,17 @@ try {
   assert.equal(race.reduce((sum,item)=>sum+item.created,0),1)
   assert.equal(await prisma.lead.count({where:{userId:userA.id,status:{in:['NOVO','ORCAMENTO_ENVIADO','NEGOCIANDO']}}}),10)
   pass(stage)
+  begin('manual creation and import share the Free limit under concurrency')
+  const release=await prisma.lead.findFirstOrThrow({where:{userId:userA.id,id:{not:first.id},status:'NOVO'}})
+  await prisma.lead.update({where:{id:release.id},data:{status:'FECHADO'}})
+  const [manualRace,importRace]=await Promise.all([
+    a('/api/leads',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name:'Concurrent manual',phone:'17990000906',status:'AGUARDANDO_RESPOSTA'})}),
+    importFile(a,'Nome;Telefone\nConcurrent import;17990000907'),
+  ])
+  assert.ok([201,403].includes(manualRace.status))
+  assert.equal(Number(manualRace.status===201)+importRace.created,1)
+  assert.equal(await prisma.lead.count({where:{userId:userA.id,status:{in:['NOVO','PRIMEIRO_CONTATO','ORCAMENTO_ENVIADO','NEGOCIANDO','AGUARDANDO_RESPOSTA']}}}),10)
+  pass(stage)
   begin('manual create blocked at Free limit')
   assert.equal((await a('/api/leads',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name:'Over limit',phone:'17990000903'})})).status,403)
   pass(stage)
@@ -181,6 +192,48 @@ try {
   assert.equal(await prisma.whatsAppConnection.count({where:{userId:userA.id}}),0)
   assert.equal(await prisma.whatsAppConnection.count({where:{userId:userB.id}}),1)
   assert.equal(await prisma.followup.count({where:{userId:userA.id}}),1)
+  pass(stage)
+  begin('seven pipeline stages and quote revisions are tenant scoped')
+  assert.equal((await a(`/api/leads/${first.id}`,{method:'PATCH',headers:{'content-type':'application/json'},body:JSON.stringify({status:'PRIMEIRO_CONTATO'})})).status,403)
+  const archived=await prisma.lead.findFirstOrThrow({where:{userId:userA.id,id:{not:first.id},status:{in:['NOVO','PRIMEIRO_CONTATO','ORCAMENTO_ENVIADO','NEGOCIANDO','AGUARDANDO_RESPOSTA']}}})
+  assert.equal((await a(`/api/leads/${archived.id}`,{method:'PATCH',headers:{'content-type':'application/json'},body:JSON.stringify({status:'FECHADO'})})).status,200)
+  for(const status of ['PRIMEIRO_CONTATO','AGUARDANDO_RESPOSTA','ORCAMENTO_ENVIADO','NEGOCIANDO']) {
+    assert.equal((await a(`/api/leads/${first.id}`,{method:'PATCH',headers:{'content-type':'application/json'},body:JSON.stringify({status})})).status,200)
+  }
+  const quoteResponse=await a('/api/orcamentos',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({leadId:first.id,title:'Website fixture',amount:'1.234,56'})})
+  assert.equal(quoteResponse.status,201)
+  const quote=(await quoteResponse.json()).quote
+  assert.equal(quote.amount,'1234.56')
+  assert.equal((await b(`/api/orcamentos/${quote.id}`,{method:'PATCH',headers:{'content-type':'application/json'},body:JSON.stringify({version:1,status:'ACEITO'})})).status,404)
+  assert.equal((await a(`/api/orcamentos/${quote.id}`,{method:'PATCH',headers:{'content-type':'application/json'},body:JSON.stringify({version:1,status:'ENVIADO',amount:'1500.25'})})).status,200)
+  assert.equal((await a(`/api/orcamentos/${quote.id}`,{method:'PATCH',headers:{'content-type':'application/json'},body:JSON.stringify({version:1,status:'ACEITO'})})).status,409)
+  assert.equal(await prisma.leadActivity.count({where:{userId:userA.id,leadId:first.id,kind:'QUOTE'}}),2)
+  assert.ok(!(await (await b('/api/orcamentos')).text()).includes(quote.id))
+  pass(stage)
+  begin('reminders persist and invalid dates and money are rejected')
+  assert.equal((await a(`/api/leads/${first.id}`,{method:'PATCH',headers:{'content-type':'application/json'},body:JSON.stringify({followupEnabled:false,followupAfterDays:7,nextFollowup:'2026-11-02T12:00:00.000Z'})})).status,200)
+  assert.equal((await prisma.lead.findUniqueOrThrow({where:{id:first.id}})).followupEnabled,false)
+  for(const bad of [{value:'abc'},{value:-1},{nextFollowup:'not-a-date'}]) assert.equal((await a(`/api/leads/${first.id}`,{method:'PATCH',headers:{'content-type':'application/json'},body:JSON.stringify(bad)})).status,400)
+  pass(stage)
+  begin('expired WhatsApp token is cleared for its owner')
+  await prisma.whatsAppConnection.update({where:{userId:userB.id},data:{tokenExpiresAt:new Date(Date.now()-1000)}})
+  const expired=await (await b('/api/whatsapp/connect')).json()
+  assert.equal(expired.connection.status,'REAUTH_REQUIRED')
+  assert.equal((await prisma.whatsAppConnection.findUniqueOrThrow({where:{userId:userB.id}})).encryptedToken,'')
+  assert.equal((await webhook({object:'whatsapp_business_account',entry:[{changes:[inbound('900002','5517990000905','revoked-b')]}]})).status,200)
+  assert.equal(await prisma.leadMessage.count({where:{userId:userB.id,providerMessageId:'revoked-b'}}),0)
+  pass(stage)
+  begin('password reset is one use and invalidates previous sessions')
+  const rawToken=randomBytes(32).toString('hex'), tokenHash=createHash('sha256').update(rawToken).digest('hex')
+  await prisma.passwordReset.create({data:{userId:userB.id,tokenHash,expiresAt:new Date(Date.now()+60000)}})
+  const reset={method:'POST',headers:{'content-type':'application/json',origin:base},body:JSON.stringify({token:rawToken,password:'NewLocalFixturePassword!'})}
+  assert.equal((await b('/api/password/reset',reset)).status,200)
+  assert.equal((await b('/api/password/reset',reset)).status,400)
+  assert.equal((await b('/api/leads')).status,401)
+  assert.equal((await a('/api/password/forgot',{method:'POST',headers:{'content-type':'application/json',origin:base},body:JSON.stringify({email:userB.email})})).status,503)
+  const newClient=client(), csrf=(await (await newClient('/api/auth/csrf')).json()).csrfToken
+  await newClient('/api/auth/callback/credentials',{method:'POST',headers:{'content-type':'application/x-www-form-urlencoded'},body:new URLSearchParams({email:userB.email,password:'NewLocalFixturePassword!',csrfToken:csrf})})
+  assert.equal((await newClient('/api/leads')).status,200)
   pass(stage)
   begin('logout clears authenticated session')
   const {csrfToken} = await (await a('/api/auth/csrf')).json()

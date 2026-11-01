@@ -15,6 +15,8 @@ type Lead = {
 
 const COLUMN_LABEL: Record<string, string> = {
   NOVO: 'Novos',
+  PRIMEIRO_CONTATO: 'Primeiro contato',
+  AGUARDANDO_RESPOSTA: 'Aguardando resposta',
   ORCAMENTO_ENVIADO: 'Orçamento enviado',
   NEGOCIANDO: 'Negociando',
   FECHADO: 'Fechados',

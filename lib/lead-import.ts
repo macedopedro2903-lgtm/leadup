@@ -12,7 +12,7 @@ export type ImportInput = {
   company?: string
   service?: string
   value?: number
-  status: 'NOVO' | 'ORCAMENTO_ENVIADO' | 'NEGOCIANDO' | 'FECHADO' | 'PERDIDO'
+  status: 'PRIMEIRO_CONTATO' | 'AGUARDANDO_RESPOSTA' | 'NOVO' | 'ORCAMENTO_ENVIADO' | 'NEGOCIANDO' | 'FECHADO' | 'PERDIDO'
   explicitStatus: boolean
   notes?: string
   nextFollowup?: Date
@@ -92,7 +92,7 @@ function parseStatus(raw: string): ImportInput['status'] | undefined | null {
   if (!raw) return undefined
   const v=normalizeHeader(raw)
   const values: Record<string,ImportInput['status']> = {
-    'novo':'NOVO','orcamento enviado':'ORCAMENTO_ENVIADO','negociando':'NEGOCIANDO',
+    'novo':'NOVO','primeiro contato':'PRIMEIRO_CONTATO','aguardando resposta':'AGUARDANDO_RESPOSTA','orcamento enviado':'ORCAMENTO_ENVIADO','negociando':'NEGOCIANDO',
     'negociacao':'NEGOCIANDO','em negociacao':'NEGOCIANDO','fechado':'FECHADO','perdido':'PERDIDO',
   }
   return values[v] ?? null

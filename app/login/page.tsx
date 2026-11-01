@@ -13,6 +13,7 @@ export default async function LoginPage() {
   return (
     <AuthLayout title="Entrar no LeadUp" description="Acesse sua conta para organizar seus leads.">
       <LoginForm />
+      <Link className="block mt-4 text-center text-sm underline" href="/esqueci-senha">Esqueci minha senha</Link>
       <p className="mt-6 text-center text-sm text-muted-foreground">
         Ainda não tem conta?{' '}
         <Link href="/cadastro" className="text-primary font-medium hover:underline">

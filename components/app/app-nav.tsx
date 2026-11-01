@@ -13,6 +13,7 @@ const NAV = [
   { href: '/app/leads', label: 'Leads', icon: Users },
   { href: '/app/importar', label: 'Importar leads', icon: FileUp },
   { href: '/app/funil', label: 'Funil', icon: KanbanSquare },
+  { href: '/app/orcamentos', label: 'Orçamentos', icon: FileUp },
   { href: '/app/followups', label: 'Follow-ups', icon: MessageSquareText },
   { href: '/app/configuracoes', label: 'Configurações', icon: Settings },
 ]

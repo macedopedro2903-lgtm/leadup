@@ -21,6 +21,8 @@ enum PlanStatus {
 
 enum LeadStatus {
   NOVO
+  PRIMEIRO_CONTATO
+  AGUARDANDO_RESPOSTA
   ORCAMENTO_ENVIADO
   NEGOCIANDO
   FECHADO
@@ -61,6 +63,10 @@ model User {
   planRequests  PlanRequest[]
   whatsappConnection WhatsAppConnection?
   importAudits   LeadImportAudit[]
+  quotes Quote[]
+  activities LeadActivity[]
+  passwordResets PasswordReset[]
+  sessionVersion Int @default(0)
   accounts      Account[]
   sessions      Session[]
 
@@ -91,6 +97,10 @@ model Lead {
   user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   followups Followup[]
   messages LeadMessage[]
+  quotes Quote[]
+  activities LeadActivity[]
+  followupEnabled Boolean @default(true)
+  followupAfterDays Int @default(3)
 
   @@index([userId])
   @@index([userId, status])
@@ -228,6 +238,8 @@ model WhatsAppConnection {
   displayPhone      String?
   encryptedToken    String
   status            WhatsAppConnectionStatus @default(PENDING_REGISTRATION)
+  tokenExpiresAt    DateTime?
+  lastCheckedAt     DateTime?
   connectedAt       DateTime @default(now())
   activatedAt       DateTime?
   lastInboundAt     DateTime?
@@ -241,4 +253,53 @@ model WhatsAppConnection {
 enum WhatsAppConnectionStatus {
   PENDING_REGISTRATION
   CONNECTED
+  REAUTH_REQUIRED
+}
+
+model Quote {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  leadId String
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  title String
+  description String?
+  amount Decimal @db.Decimal(12, 2)
+  status QuoteStatus @default(RASCUNHO)
+  validUntil DateTime?
+  version Int @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([userId, createdAt])
+  @@index([userId, leadId])
+}
+
+enum QuoteStatus {
+  RASCUNHO
+  ENVIADO
+  ACEITO
+  RECUSADO
+}
+
+model LeadActivity {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  leadId String
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  kind String
+  summary String
+  createdAt DateTime @default(now())
+  @@index([userId, leadId, createdAt])
+}
+
+model PasswordReset {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String @unique
+  expiresAt DateTime
+  usedAt DateTime?
+  createdAt DateTime @default(now())
+  @@index([userId, createdAt])
 }

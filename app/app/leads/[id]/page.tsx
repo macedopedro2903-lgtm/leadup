@@ -11,13 +11,17 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
   const lead = await prisma.lead.findUnique({ where: { id } })
   if (!lead || lead.userId !== user.id) notFound()
 
-  const followups = await prisma.followup.findMany({ where: { leadId: id }, orderBy: { createdAt: 'desc' } })
+  const followups = await prisma.followup.findMany({ where: { leadId: id, userId: user.id }, orderBy: { createdAt: 'desc' } })
+
+  const [messages,activities]=await Promise.all([prisma.leadMessage.findMany({where:{userId:user.id,leadId:id},orderBy:{receivedAt:'desc'},take:100}),prisma.leadActivity.findMany({where:{userId:user.id,leadId:id},orderBy:{createdAt:'desc'},take:100})])
 
   return (
-    <LeadDetail
+    <LeadDetail key={lead.updatedAt.toISOString()}
+      messages={messages.map(m=>({id:m.id,body:m.body,createdAt:m.receivedAt.toISOString()}))}
+      activities={activities.map(a=>({id:a.id,summary:a.summary,createdAt:a.createdAt.toISOString()}))}
       lead={{
         id: lead.id, name: lead.name, phone: lead.phone, service: lead.service, value: lead.value,
-        status: lead.status, notes: lead.notes,
+        status: lead.status, notes: lead.notes, source:lead.source, lastContactAt:lead.lastContactAt?.toISOString()??null, followupEnabled:lead.followupEnabled,followupAfterDays:lead.followupAfterDays,
         nextFollowup: lead.nextFollowup ? lead.nextFollowup.toISOString() : null,
         createdAt: lead.createdAt.toISOString(), updatedAt: lead.updatedAt.toISOString(),
       }}

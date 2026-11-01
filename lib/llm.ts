@@ -39,6 +39,8 @@ export type FollowupInput = {
 
 const STATUS_LABEL: Record<string, string> = {
   NOVO: 'Novo contato',
+  PRIMEIRO_CONTATO:'Primeiro contato',
+  AGUARDANDO_RESPOSTA:'Aguardando resposta',
   ORCAMENTO_ENVIADO: 'Orçamento enviado',
   NEGOCIANDO: 'Em negociação',
   FECHADO: 'Fechado',
@@ -75,6 +77,7 @@ export async function generateFollowupMessage(input: FollowupInput): Promise<str
       'Content-Type': 'application/json',
       Authorization: `Bearer ${apiKey}`,
     },
+    signal: AbortSignal.timeout(20000),
     body: JSON.stringify({
       model: 'gpt-5.4-mini',
       messages: [

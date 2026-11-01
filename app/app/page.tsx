@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { attentionReason } from '@/lib/commercial'
 import { requireUser } from '@/lib/session'
 import { prisma } from '@/lib/db'
 import { ACTIVE_LEAD_STATUSES } from '@/lib/plan'
@@ -28,11 +29,15 @@ export default async function DashboardPage() {
   )
 
   // Precisa da sua atenção: follow-up vencido ou para hoje (apenas leads ativos)
-  const needsAttention = followupsToday
+  const needsAttention = leads.filter(l=>attentionReason(l, now))
     .slice()
-    .sort((a, b) => (a.nextFollowup!.getTime()) - (b.nextFollowup!.getTime()))
+    .sort((a, b) => (a.nextFollowup?.getTime() ?? a.createdAt.getTime()) - (b.nextFollowup?.getTime() ?? b.createdAt.getTime()))
 
   const cards = [
+    { label: 'Novos leads', value: String(leads.filter(l=>l.status==='NOVO').length), icon: Users },
+    { label: 'Orçamentos enviados', value: String(await prisma.quote.count({where:{userId:user.id,status:'ENVIADO'}})), icon: Wallet },
+    { label: 'Vendas concluídas', value: String(closed.length), icon: CheckCircle2 },
+    { label: 'Taxa de conversão', value: `${leads.length ? (100*closed.length/leads.length).toFixed(1) : '0'}%`, icon: Handshake },
     { label: 'Leads ativos', value: String(active.length), icon: Users },
     { label: 'Valor em oportunidades abertas', value: formatBRL(openValue), icon: Wallet },
     { label: 'Valor fechado', value: formatBRL(closedValue), icon: CheckCircle2 },
@@ -47,7 +52,7 @@ export default async function DashboardPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl font-bold tracking-tight">Olá, {firstName}</h1>
-          <p className="text-sm text-muted-foreground mt-1">Acompanhe suas oportunidades e não perca nenhum follow-up.</p>
+          <p className="text-sm text-muted-foreground mt-1">Acompanhe suas oportunidades e não perca nenhum follow-up. Atualização automática a cada 15 segundos.</p>
         </div>
         <Button asChild>
           <Link href="/app/leads?novo=1"><Plus className="mr-2 h-4 w-4" /> Novo lead</Link>
@@ -94,7 +99,7 @@ export default async function DashboardPage() {
             ) : (
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {needsAttention.map((l) => {
-                  const d = daysSince(l.updatedAt)
+                  const d = daysSince(l.lastContactAt ?? l.createdAt)
                   const overdue = l.nextFollowup && l.nextFollowup.getTime() < new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
                   return (
                     <Card key={l.id}>
@@ -107,8 +112,8 @@ export default async function DashboardPage() {
                           <Badge variant={overdue ? 'destructive' : 'secondary'}>{LEAD_STATUS_LABEL[l.status]}</Badge>
                         </div>
                         <p className="text-xs text-muted-foreground mt-2">
-                          {d === 0 ? 'Atualizado hoje' : `${d} ${d === 1 ? 'dia' : 'dias'} sem retorno`}
-                          {overdue ? ' · follow-up vencido' : ' · follow-up para hoje'}
+                          {d === 0 ? 'Interação hoje' : `${d} ${d === 1 ? 'dia' : 'dias'} sem interação`}
+                           · {attentionReason(l,now)}
                         </p>
                         <div className="flex gap-2 mt-4">
                           <Button asChild size="sm" variant="outline" className="flex-1">

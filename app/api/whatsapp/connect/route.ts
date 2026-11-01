@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSessionUserId } from '@/lib/session'
 import { prisma } from '@/lib/db'
 import { COOKIE, freshNonce, sameOrigin, validNonce } from '@/lib/whatsapp-connect-guard'
+import { checkConnection } from '@/lib/whatsapp-health'
 import { encryptStoredToken, exchangeSignupCode, metaGraph, publicMetaSettings, verifyPhoneInWaba } from '@/lib/whatsapp-meta'
 
 export const runtime = 'nodejs'
@@ -13,6 +14,7 @@ export async function GET() {
   const userId = await getSessionUserId()
   if (!userId) return NextResponse.json({error:'Não autorizado.'},{status:401})
   const settings = publicMetaSettings()
+  await checkConnection(userId)
   const existing = await prisma.whatsAppConnection.findUnique({where:{userId},select:{status:true,displayPhone:true,connectedAt:true,lastError:true,skippedMessages:true}})
   const {nonce,cookie} = freshNonce(userId)
   const result = NextResponse.json({settings,connection: existing ? {status:existing.status,displayPhone:existing.displayPhone,connectedAt:existing.connectedAt,lastError:existing.lastError,skippedMessages:existing.skippedMessages} : null,nonce},nonCached)
@@ -32,18 +34,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({error:'Autorização expirada ou inválida. Reinicie a conexão.'},{status:403})
   }
   const previous = await prisma.whatsAppConnection.findUnique({where:{userId}})
-  if (previous) return NextResponse.json({error:'Desconecte a conta anterior antes de vincular outro número.'},{status:409})
+  if (previous && previous.status!=='REAUTH_REQUIRED') return NextResponse.json({error:'Desconecte a conta anterior antes de vincular outro número.'},{status:409})
   const owned = await prisma.whatsAppConnection.findUnique({where:{phoneNumberId}})
-  if (owned) return NextResponse.json({error:'Esse número já está vinculado a outra conta LeadUp.'},{status:409})
+  if (owned && owned.userId!==userId) return NextResponse.json({error:'Esse número já está vinculado a outra conta LeadUp.'},{status:409})
   try {
-    const token = await exchangeSignupCode(code)
+    const {token,expiresAt} = await exchangeSignupCode(code)
     const displayPhone = await verifyPhoneInWaba(wabaId,phoneNumberId,token)
     // Meta delivers messages only after the app is subscribed to the authorized WABA.
     const subscription = await metaGraph<{success?:boolean|string}>(`/${wabaId}/subscribed_apps`,token,'POST')
     if (subscription.success !== true && subscription.success !== 'true') throw new Error('Meta did not confirm subscription')
-    await prisma.whatsAppConnection.create({data:{
-      userId,wabaId,phoneNumberId,displayPhone,encryptedToken:encryptStoredToken(token),status:'PENDING_REGISTRATION'
-    }})
+    const connectionData={wabaId,phoneNumberId,displayPhone,encryptedToken:encryptStoredToken(token),tokenExpiresAt:expiresAt,lastCheckedAt:new Date(),lastError:null,status:'PENDING_REGISTRATION' as const}
+    if(previous) await prisma.whatsAppConnection.update({where:{id:previous.id,userId,status:'REAUTH_REQUIRED'},data:connectionData})
+    else await prisma.whatsAppConnection.create({data:{userId,...connectionData}})
     const response = NextResponse.json({ok:true,status:'PENDING_REGISTRATION'},nonCached)
     response.cookies.set(COOKIE,'',{path:'/api/whatsapp/connect',maxAge:0})
     return response

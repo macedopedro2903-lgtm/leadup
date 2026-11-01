@@ -7,7 +7,8 @@
     "start": "next start",
     "lint": "eslint .",
     "test:import": "node --import tsx --test tests/import-utils.test.ts tests/import-edge.test.ts tests/import-xlsx.test.ts",
-    "test:whatsapp": "node --import tsx --test tests/whatsapp-meta.test.ts tests/whatsapp-connection-guard.test.ts"
+    "test:whatsapp": "node --import tsx --test tests/whatsapp-meta.test.ts tests/whatsapp-connection-guard.test.ts",
+    "test:commercial": "node --import tsx --test tests/commercial.test.ts"
   },
   "prisma": {
     "seed": "tsx --require dotenv/config scripts/safe-seed.ts"

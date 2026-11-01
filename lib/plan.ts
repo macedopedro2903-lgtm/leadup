@@ -4,7 +4,7 @@ import type { User } from '@prisma/client'
 export type EffectivePlan = 'FREE' | 'START'
 
 /** Status de lead considerados "ativos" (ocupam o limite do plano Free). */
-export const ACTIVE_LEAD_STATUSES = ['NOVO', 'ORCAMENTO_ENVIADO', 'NEGOCIANDO'] as const
+export const ACTIVE_LEAD_STATUSES = ['NOVO', 'PRIMEIRO_CONTATO', 'ORCAMENTO_ENVIADO', 'NEGOCIANDO', 'AGUARDANDO_RESPOSTA'] as const
 
 /**
  * Plano efetivo do usuário levando em conta expiração e status.

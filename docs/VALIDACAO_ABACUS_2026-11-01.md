@@ -1,6 +1,6 @@
 # LeadUp — relatório de validação após autenticação na Abacus
 
-Atualizado em 01/11/2026. A atualização está em revisão, **não publicada**. Não confundir a cópia isolada de validação com o aplicativo público.
+Atualizado em 01/11/2026. A etapa comercial posterior está descrita em `FINALIZACAO_2026-11-01.md`; os 20 testes integrados abaixo se referem à revisão anterior, não à nova etapa ainda em validação. A atualização está em revisão, **não publicada**. Não confundir a cópia isolada de validação com o aplicativo público.
 
 ## A. Abacus
 

@@ -14,7 +14,7 @@ type MetaSDK = {
 declare global {interface Window {FB?:MetaSDK}}
 type State = {
   settings:{appId:string;configId:string;version:string;ready:boolean}
-  connection:null|{status:'PENDING_REGISTRATION'|'CONNECTED';displayPhone:string|null;connectedAt:string;lastError:string|null;skippedMessages:number}
+  connection:null|{status:'PENDING_REGISTRATION'|'CONNECTED'|'REAUTH_REQUIRED';displayPhone:string|null;connectedAt:string;lastError:string|null;skippedMessages:number}
   nonce:string
 }
 
@@ -154,7 +154,10 @@ export function WhatsAppConnectionCard() {
     <CardHeader><CardTitle className="text-base flex items-center gap-2"><MessageCircle className="h-5 w-5"/>Integração oficial com WhatsApp</CardTitle></CardHeader>
     <CardContent className="space-y-4 text-sm">
       {!state ? <p>Consultando conexão...</p> : !state.settings.ready ?
-        <p className="text-muted-foreground">Conexão ainda indisponível: o administrador precisa configurar o aplicativo Meta, o webhook e as chaves de segurança. Nenhuma conta será conectada sem autorização.</p> : current?.status==='CONNECTED' ? <>
+        <p className="text-muted-foreground">Conexão ainda indisponível: o administrador precisa configurar o aplicativo Meta, o webhook e as chaves de segurança. Nenhuma conta será conectada sem autorização.</p> : current?.status==='REAUTH_REQUIRED' ? <>
+          <p role="alert">Autorização expirada ou revogada para {current.displayPhone||'seu número'}. Conecte novamente para retomar a integração.</p>
+          <Button variant="outline" disabled={busy} onClick={disconnect}>Remover conexão inválida para reconectar</Button>
+        </> : current?.status==='CONNECTED' ? <>
           <p><strong>Conectado:</strong> {current.displayPhone || 'Número autorizado'}</p>
           <p className="text-muted-foreground">O recebimento automático será confirmado ao receber uma mensagem de teste no número conectado. Somente mensagens novas e autorizadas são registradas.</p>
           {current.lastError && <p role="alert" className="text-destructive">{current.lastError} ({current.skippedMessages} mensagens ignoradas)</p>}

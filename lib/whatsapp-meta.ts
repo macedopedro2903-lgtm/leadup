@@ -18,6 +18,8 @@ function graphBase() {
   return `https://graph.facebook.com/${version}`
 }
 
+export class MetaAuthorizationError extends Error { constructor(){super('Meta authorization no longer valid')} }
+
 /** No Meta token or response body is copied into exceptions/logs. */
 export async function metaGraph<T>(endpoint: string, accessToken: string, method: 'GET' | 'POST' = 'GET', body?: unknown): Promise<T> {
   if (!/^\/[A-Za-z0-9_/.?-]+(?:&[A-Za-z0-9_=&,.%-]+)*$/.test(endpoint)) throw new Error('Invalid Graph endpoint')
@@ -27,11 +29,15 @@ export async function metaGraph<T>(endpoint: string, accessToken: string, method
     ...(body ? {body:JSON.stringify(body)} : {}),
     cache:'no-store', signal:AbortSignal.timeout(12000),
   })
-  if (!response.ok) throw new Error(`Meta Graph API request failed (${response.status})`)
+  if (!response.ok) {
+    const failure=await response.json().catch(()=>null) as {error?:{code?:number}}|null
+    if(failure?.error?.code===190||failure?.error?.code===102)throw new MetaAuthorizationError()
+    throw new Error(`Meta Graph API request failed (${response.status})`)
+  }
   return await response.json() as T
 }
 
-export async function exchangeSignupCode(code: string): Promise<string> {
+export async function exchangeSignupCode(code: string): Promise<{token:string;expiresAt:Date|null}> {
   const {META_APP_ID:appId,META_APP_SECRET:secret} = process.env
   if (!appId || !secret) throw new Error('Meta configuration missing')
   const params = new URLSearchParams({client_id: appId,client_secret:secret,code})
@@ -41,7 +47,8 @@ export async function exchangeSignupCode(code: string): Promise<string> {
   const json:unknown = await response.json()
   const token = (json as {access_token?:unknown}).access_token
   if (typeof token !== 'string' || token.length < 10) throw new Error('Meta did not return a valid token')
-  return token
+  const seconds=(json as {expires_in?:unknown}).expires_in
+  return {token,expiresAt:typeof seconds==='number'&&seconds>0&&seconds<315360000?new Date(Date.now()+seconds*1000):null}
 }
 
 export async function verifyPhoneInWaba(wabaId: string, phoneNumberId: string, token: string): Promise<string> {
