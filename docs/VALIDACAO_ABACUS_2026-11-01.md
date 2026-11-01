@@ -8,7 +8,7 @@ Situação: preparado para revisão, NÃO publicado. Data: 01/11/2026.
 - Branch: `atualizacao-importacao-2026-11-01`; base `36bd960eb22a3e0e6a188946eac17500868d1dc3`.
 - Abacus: projeto `16bb691509`, conversa `30a119ee7`. O acesso exibiu a tela de login; domínio e versão de produção não foram confirmados.
 - Pacote anexado de importação comparado com a versão 2 de `LeadUp_integracao_oficial_WhatsApp_Meta_para_validacao.zip`.
-- Landing, preços, login, cadastro, funil, cobrança e seeds não foram substituídos. Não houve merge, mudança de domínio ou acesso ao banco de produção.
+- Identidade visual, preços, autenticação, funil, cobrança e seeds preservados. Ajustes técnicos de lint em layout (next/script), links legais, componentes de hidratação/carrossel/formulário e imports de configuração não alteram preços ou o desenho da landing; a revisão visual em navegador ainda está pendente. Não houve merge, mudança de domínio ou acesso ao banco de produção.
 
 ## Alterações
 
@@ -16,7 +16,7 @@ Importação CSV/XLSX com preview, mapeamento, normalização brasileira, duplic
 
 Integração Meta do pacote incluída: cartão de conexão, nonce assinado por usuário, troca de código no backend, token AES-GCM, conferência WABA/número, inscrição do app, registro do número, desafio e assinatura do webhook, roteamento por número exclusivo, transação e deduplicação de mensagens. Não há envio automático, importação de conversas antigas nem agenda. Apenas números brasileiros são aceitos. Links wa.me preservados.
 
-Dependências: Zod 3.25.76 mantém API v3 e permite o subpath exigido pelo lint; overrides npm reproduzem as versões Motion já fixadas nas resolutions Yarn. Lockfile npm acrescentado. Scripts de teste usam `node --import tsx` para evitar IPC do CLI tsx bloqueado neste ambiente. O lint deixa de analisar o kit JavaScript de terceiros em `public/abacus-viz`; regras do código da aplicação não foram desativadas.
+Dependências: Zod 3.25.76 mantém API v3 e permite o subpath exigido pelo lint; overrides npm reproduzem as versões Motion já fixadas nas resolutions Yarn. Lockfile npm acrescentado. Scripts de teste usam `node --import tsx` para evitar IPC do CLI tsx bloqueado neste ambiente. O lint deixa de analisar o kit JavaScript de terceiros em `public/abacus-viz`; regras do código da aplicação não foram desativadas. A exceção de imports require foi delimitada ao arquivo de configuração Next.js que usa CommonJS. Os erros restantes foram corrigidos com next/script, Link, useSyncExternalStore, sincronização de refs fora do render e reset condicional do formulário.
 
 ## Evidências reais
 
@@ -30,7 +30,7 @@ Ambiente: Node 24.22.1, npm 11.9.0; engines do projeto exigem Node >=20.9.
 | npm run test:import | 11/11 aprovados, incluindo roundtrip XLSX, CSV, telefones e campos |
 | npm run test:whatsapp | 6/6 aprovados, assinatura, criptografia, parser, origem e nonce |
 | npx tsc --noEmit | Aprovado após gerar Prisma e estabilizar dependências |
-| npm run lint | Reprovado: 13 erros e 18 avisos remanescentes em arquivos já existentes |
+| npm run lint | Aprovado: 0 erros e 18 avisos preexistentes |
 | Lint dos módulos novos | Aprovado, incluindo todos os testes e XLSX |
 | Build Next.js | Aprovado com NEXT_DIST_DIR=.build NEXT_TELEMETRY_DISABLED=1 npm run build |
 | git diff --check | Aprovado |
@@ -57,7 +57,7 @@ Expiração/revogação proativa de tokens, reautorização, callbacks de revoga
 ## Aceitação pendente e bloqueios
 
 - Login autorizado na Abacus para confirmar projeto, domínio, configuração, banco e publicação sem créditos pagos adicionais.
-- Resolver 13 erros de lint existentes antes de aprovar merge/publicação.
+- Rever os 18 avisos não bloqueadores de lint e conferir visualmente os ajustes de React.
 - Backup restaurado e migração testada em PostgreSQL, sem perdas.
 - Cadastro/login reais, criação/edição, limites concorrentes entre API manual/importação/webhook, preservação de histórico, funil e follow-ups.
 - Fluxo Meta com conta autorizada e mensagem real, repetição de evento, assinatura inválida, expiração/revogação e isolamento de duas contas.

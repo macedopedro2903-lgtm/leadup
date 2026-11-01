@@ -1,3 +1,4 @@
+/* eslint @typescript-eslint/no-require-imports: off -- Next.js loads this file as CommonJS. */
 /** @type {import('next').NextConfig} */
 const path = require('path');
 
