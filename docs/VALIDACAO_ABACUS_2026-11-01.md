@@ -1,66 +1,94 @@
-# LeadUp — validação e publicação na Abacus
+# LeadUp — relatório de validação após autenticação na Abacus
 
-Situação: preparado para revisão, NÃO publicado. Data: 01/11/2026.
+Atualizado em 01/11/2026. A atualização está em revisão, **não publicada**. Não confundir a cópia isolada de validação com o aplicativo público.
 
-## Origem preservada
+## A. Abacus
 
-- Repositório: `macedopedro2903-lgtm/leadup`.
-- Branch: `atualizacao-importacao-2026-11-01`; base `36bd960eb22a3e0e6a188946eac17500868d1dc3`.
-- Abacus: projeto `16bb691509`, conversa `30a119ee7`. O acesso exibiu a tela de login; domínio e versão de produção não foram confirmados.
-- Pacote anexado de importação comparado com a versão 2 de `LeadUp_integracao_oficial_WhatsApp_Meta_para_validacao.zip`.
-- Identidade visual, preços, autenticação, funil, cobrança e seeds preservados. Ajustes técnicos de lint em layout (next/script), links legais, componentes de hidratação/carrossel/formulário e imports de configuração não alteram preços ou o desenho da landing; a revisão visual em navegador ainda está pendente. Não houve merge, mudança de domínio ou acesso ao banco de produção.
+Acesso autenticado confirmado ao projeto `16bb691509`, conversa `30a119ee7`, aplicativo **LeadUp Site SaaS**. Endereço existente verificado no console e no navegador: https://leadup.abacusai.app/.
 
-## Alterações
+Versão marcada como implantada no console: **Corrige botão de assinatura Start via WhatsApp**, 01/11/2026 às 11:45. Ela continua sendo a versão pública; nenhuma nova implantação foi concluída nesta revisão. A conversa registra esgotamento dos créditos do agente. Nenhuma mensagem foi enviada ao agente pago e nenhum crédito adicional foi comprado.
 
-Importação CSV/XLSX com preview, mapeamento, normalização brasileira, duplicatas, limites, relatório e confirmação. O commit da importação agora usa transação serializável, recalculando plano/dados em cada tentativa e revertendo a tentativa integralmente em caso de falha. O comportamento concorrente precisa de teste PostgreSQL; não foi comprovado apenas por revisão.
+O terminal do ambiente original foi acessado pelo computador disponibilizado pela Abacus. A atualização foi clonada e validada em diretório isolado; os arquivos canônicos do aplicativo publicado e seu domínio não foram substituídos.
 
-Integração Meta do pacote incluída: cartão de conexão, nonce assinado por usuário, troca de código no backend, token AES-GCM, conferência WABA/número, inscrição do app, registro do número, desafio e assinatura do webhook, roteamento por número exclusivo, transação e deduplicação de mensagens. Não há envio automático, importação de conversas antigas nem agenda. Apenas números brasileiros são aceitos. Links wa.me preservados.
+## B. GitHub
 
-Dependências: Zod 3.25.76 mantém API v3 e permite o subpath exigido pelo lint; overrides npm reproduzem as versões Motion já fixadas nas resolutions Yarn. Lockfile npm acrescentado. Scripts de teste usam `node --import tsx` para evitar IPC do CLI tsx bloqueado neste ambiente. O lint deixa de analisar o kit JavaScript de terceiros em `public/abacus-viz`; regras do código da aplicação não foram desativadas. A exceção de imports require foi delimitada ao arquivo de configuração Next.js que usa CommonJS. Os erros restantes foram corrigidos com next/script, Link, useSyncExternalStore, sincronização de refs fora do render e reset condicional do formulário.
+Repositório original `macedopedro2903-lgtm/leadup`, branch `atualizacao-importacao-2026-11-01`, PR em rascunho https://github.com/macedopedro2903-lgtm/leadup/pull/1. `main` permanece sem merge.
 
-## Evidências reais
+Inclui importação, implementação inicial da integração Meta, ajustes de lint, lockfile e scripts de testes. A identidade visual, os preços e a cobrança foram preservados. Ajustes técnicos no carregamento de scripts, links e hooks precisam de conferência visual no preview final.
 
-Ambiente: Node 24.22.1, npm 11.9.0; engines do projeto exigem Node >=20.9.
+## C. Importação
 
-| Verificação | Resultado |
+Implementado em `/app/importar`: CSV e XLSX, preview sem gravação, detecção e mapeamento de colunas, normalização brasileira, validação por linha, políticas pular/atualizar/mesclar, relatório de erros, auditoria e confirmação.
+
+**Testado com PostgreSQL restaurado e requisições HTTP autenticadas**: CSV e XLSX gravam registros; preview não grava; reimportação não duplica; conta diferente pode ter o mesmo telefone; mesclagem mantém ID, serviço preenchido e histórico; limite Free é respeitado; duas importações simultâneas não ultrapassam o limite. O commit usa transação serializável e reavalia os limites em cada tentativa.
+
+Isso não valida toda combinação de concorrência entre importação, criação manual e mudança de status. O teste realizado de concorrência cobriu duas importações simultâneas.
+
+## D. WhatsApp
+
+Implementado no código: cartão de conexão, nonce assinado por usuário, troca de código no backend, AES-256-GCM, conferência WABA/número, inscrição do app, registro com PIN, desafio e HMAC do webhook, roteamento por número exclusivo, ingestão transacional e idempotência por usuário/mensagem. Links wa.me preservados.
+
+Os testes integrados usaram **eventos assinados sintéticos**, contas locais e conexões de teste inseridas na cópia do banco. Confirmaram associação ao lead importado, separação de contas, deduplicação de reentrega, criação de novo contato, limite Free, rejeição de assinatura incorreta e desconexão local sem apagar histórico.
+
+O teste encontrou falha na comparação de origem atrás do proxy. A correção acrescenta `LEADUP_PUBLIC_ORIGIN`, configurado explicitamente pelo administrador, sem confiar em X-Forwarded-Host. A versão corrigida passou nos testes integrados. A validação do nonce também passou a rejeitar segmentos extras no cookie.
+
+**Pendente:** Embedded Signup real, autorização de empresa/número, recebimento real da Meta, expiração/revogação proativa e reautorização. Não há envio automático, importação de agenda ou conversas antigas. O normalizador atual aceita apenas telefones brasileiros. A desconexão implementada é local, sem revogar automaticamente a autorização na Meta.
+
+## E. Meta
+
+Nenhuma credencial, permissão ou aprovação Meta foi configurada ou confirmada. O acesso ao Meta for Developers chegou à tela de autenticação, com opções Facebook ou Conta Meta gerenciada.
+
+É necessário acesso de um responsável autorizado ao aplicativo/portfólio empresarial, confirmar a versão vigente de Embedded Signup e permissões para onboarding de outras empresas, configurar o callback HTTPS e campo messages, e validar o fluxo com uma conta autorizada.
+
+Variáveis necessárias no cofre seguro do projeto original: `META_APP_ID`, `META_APP_SECRET`, `META_EMBEDDED_SIGNUP_CONFIG_ID`, `META_GRAPH_API_VERSION`, `META_WEBHOOK_VERIFY_TOKEN`, `WHATSAPP_TOKEN_ENCRYPTION_KEY`, `LEADUP_PUBLIC_ORIGIN`. Preservar `DATABASE_URL`, `AUTH_SECRET` e `NEXTAUTH_SECRET` existentes. Para o domínio atual, a origem pública é `https://leadup.abacusai.app`.
+
+A coleção oficial Meta no Postman foi consultada; a documentação Meta vinculada retornou 429 na tentativa inicial. Versão, App Review, Advanced Access e requisitos Tech Provider devem ser confirmados diretamente no painel/documentação antes de liberar a integração a clientes.
+
+## F. Banco, backup e restauração
+
+O console permitiu inspeção somente de leitura do schema associado ao aplicativo. Foram observadas nove tabelas de negócio no schema público; os novos campos/tabelas ainda não estavam presentes e não foi observada `_prisma_migrations` nesse schema.
+
+O pg_dump não foi concluído porque a credencial da aplicação não pode consultar a view `pg_settings`. Esse dump parcial NÃO é considerado um backup válido. Não houve ampliação de permissões para contornar a restrição.
+
+Como alternativa, foi criado backup lógico das nove tabelas com Prisma em transação RepeatableRead, além de uma cópia privada do código. O arquivo de dados recebeu permissões privadas e manifesto SHA-256. Dados, hashes de senha, tokens e segredos não foram enviados ao GitHub.
+
+O schema anterior foi recriado em PostgreSQL 15.19 isolado, acessível apenas por socket Unix privado com autenticação peer e sem listener de rede. O backup lógico foi restaurado em uma transação. **Todos os registros das nove tabelas tiveram correspondência integral com o backup**, não apenas contagens.
+
+O SQL aditivo `docs/database/2026-11-01-candidate.sql` foi aplicado somente nessa cópia restaurada. O teste integrado posterior confirmou novamente que todos os campos originais dos registros do backup continuavam iguais. **Nenhuma migração foi aplicada ao banco original.** Isso é uma restauração lógica validada com o schema do código, não um dump físico completo da instância gerenciada, suas roles ou configurações internas.
+
+## G. Resultados dos testes
+
+| Verificação | Resultado e alcance |
 | --- | --- |
-| Instalação npm | Aprovada, com ignore-scripts e legacy-peer-deps; não comprova instalação padrão na Abacus |
-| Prisma generate | Aprovado, cliente 6.7.0 gerado; sem conexão ao banco |
-| Prisma validate | Aprovado com URL local fictícia apenas para validação sintática; nenhuma conexão foi feita |
-| npm run test:import | 11/11 aprovados, incluindo roundtrip XLSX, CSV, telefones e campos |
-| npm run test:whatsapp | 6/6 aprovados, assinatura, criptografia, parser, origem e nonce |
-| npx tsc --noEmit | Aprovado após gerar Prisma e estabilizar dependências |
-| npm run lint | Aprovado: 0 erros e 18 avisos preexistentes |
-| Lint dos módulos novos | Aprovado, incluindo todos os testes e XLSX |
-| Build Next.js | Aprovado com NEXT_DIST_DIR=.build NEXT_TELEMETRY_DISABLED=1 npm run build |
-| git diff --check | Aprovado |
-| HTTP local do build de produção | 15/15 aprovados: páginas públicas, redirecionamento sem sessão, APIs recusando acesso sem login, desafio webhook, HMAC inválido, payload vazio assinado e JSON inválido |
+| Instalação npm | Concluída em cópia isolada com ignore-scripts e legacy-peer-deps |
+| Prisma generate | Aprovado no Work e na cópia da Abacus, cliente 6.7.0 |
+| npm run test:import | 11/11 aprovados, incluindo roundtrip XLSX |
+| npm run test:whatsapp | 7/7 aprovados após correção de origem/nonce |
+| npx tsc --noEmit | Aprovado, inclusive na cópia Abacus antes do teste integrado final |
+| npm run lint | Aprovado, zero erros e 18 avisos preexistentes |
+| npm run build | Aprovado no Work e na Abacus com NEXT_DIST_DIR=.build e telemetria desativada |
+| scripts/test-http.mjs | 15 verificações HTTP locais aprovadas, sem banco ou Meta reais |
+| scripts/test-database.mjs | **20 verificações aprovadas** no build da Abacus contra PostgreSQL restaurado |
+| Backup/restauração | Nove tabelas e todos os registros comparados integralmente; dados preservados após migração de teste |
+| git diff --check | Aprovado para as alterações revisadas |
 
-Uma execução intermediária do build falhou por cache Turbopack inválido; a repetição em `.build` limpa passou. Execuções durante a preparação de dependências falharam e foram corrigidas antes dos resultados finais acima. Não confundir esses resultados com teste de produção. Os testes HTTP usaram segredos fictícios locais, nenhum usuário autenticado e nenhum banco. Uma tentativa de acessar o servidor por outro processo isolado falhou com ECONNREFUSED; iniciar servidor e verificações no mesmo processo resolveu a limitação.
+As 20 verificações integradas incluem cadastro e login de duas contas, páginas autenticadas, CRUD com acesso cruzado recusado, follow-up manual, importação/duplicatas, concorrência, planos, webhook sintético, proteção de origem, desconexão, logout e preservação do backup. Apenas fixtures criadas pelo teste foram removidas da cópia isolada; nenhum usuário ou dado original foi excluído.
 
-## Banco, backup e rollback
+Ambientes: Node 24.22.1 no Work e Node 22.23.4 observado no terminal Abacus. O teste completo não acessa IA paga nem faz chamadas reais à Meta. Houve reinícios da área de trabalho durante a preparação; os arquivos persistiram e o resultado final integrado foi conferido após a correção.
 
-Não existe histórico Prisma migrations no repositório inspecionado. `database/2026-11-01-candidate.sql` foi gerado por diff entre schema GitHub e schema novo, contém apenas adições, mas NÃO representa o estado confirmado do banco real. Não está em `prisma/migrations` para evitar aplicação automática antes de verificar drift e baseline.
+## H. Produção e rollback
 
-Antes de aplicar: identificar DATABASE_URL no cofre da Abacus sem exibir seu valor; inspecionar tabelas e histórico real; gerar dump PostgreSQL consistente, registrar hash e versão; restaurar em banco isolado; conferir contagens e relações; aplicar candidato nessa cópia e testar importações concorrentes, leads existentes e duas contas. Depois revisar locks e estratégia de migration de produção. Não usar seed nem db push indiscriminado.
+O site público foi aberto e a landing/preços existentes foram confirmados. Isso confirma disponibilidade da versão antiga, **não publicação das novas funcionalidades**. Login real no domínio público, preview final e layout mobile da atualização ainda precisam de verificação.
 
-Rollback de código: manter versão anterior da Abacus e o commit base. As alterações propostas no banco são aditivas; após rollback de aplicação, manter tabelas e colunas novas, sem apagá-las. Restaurar backup sobre produção só com plano explícito para preservar gravações posteriores ao backup e autorização, pois restauração pode sobrescrever dados.
+Rollback planejado: manter a versão Abacus implantada e a cópia privada anterior do código. Uma futura migração aditiva não exige apagar as novas tabelas/colunas para reverter a aplicação. Restaurar dados sobre produção exige plano específico para preservar gravações posteriores ao backup; não foi feito nesta tarefa.
 
-## Meta e requisitos externos
+## I. Pendências
 
-Configurar no cofre seguro da Abacus: META_APP_ID, META_APP_SECRET, META_EMBEDDED_SIGNUP_CONFIG_ID, META_GRAPH_API_VERSION, META_WEBHOOK_VERIFY_TOKEN e WHATSAPP_TOKEN_ENCRYPTION_KEY. Preservar AUTH_SECRET/NEXTAUTH_SECRET e DATABASE_URL reais. Nenhum desses valores foi configurado ou inventado nesta revisão.
+1. Autenticação de responsável autorizado na Meta e validação do aplicativo/permissões/conta de teste.
+2. Implementar e validar ciclo completo de expiração, revogação e reautorização antes de oferecer integração completa.
+3. Confirmar acesso de login ao LeadUp no preview/publicação e revisar layout mobile.
+4. Confirmar mecanismo de checkpoint/publicação do código atualizado no projeto original, sem consumir créditos pagos adicionais.
+5. Atualizar backup antes de qualquer alteração futura no banco original, conferir drift final e aplicar apenas migração aprovada e validada.
+6. Publicar na URL original somente após os critérios aplicáveis; conferir dados, autenticação, importação, logs e mensagem real após publicação.
 
-Confirmar aplicativo Meta e autorização de empresa elegível, Login for Business/Embedded Signup vigente, domínios HTTPS, callback `/api/whatsapp/meta-webhook`, campo messages, permissões whatsapp_business_management e whatsapp_business_messaging, Advanced Access/App Review e requisitos de onboarding de terceiros aplicáveis ao modelo Tech Provider. A coleção oficial Meta no Postman foi consultada; a página Meta vinculada retornou 429. A versão e os requisitos atuais precisam de confirmação direta no painel/documentação antes da ativação.
-
-Expiração/revogação proativa de tokens, reautorização, callbacks de revogação, limites operacionais, fila/retentativas duráveis e tratamento de coexistência ainda precisam de implementação/validação adicional. A desconexão atual é local; a revogação na Meta é independente. Não classificar o ciclo de autenticação como completo.
-
-## Aceitação pendente e bloqueios
-
-- Login autorizado na Abacus para confirmar projeto, domínio, configuração, banco e publicação sem créditos pagos adicionais.
-- Rever os 18 avisos não bloqueadores de lint e conferir visualmente os ajustes de React.
-- Backup restaurado e migração testada em PostgreSQL, sem perdas.
-- Cadastro/login reais, criação/edição, limites concorrentes entre API manual/importação/webhook, preservação de histórico, funil e follow-ups.
-- Fluxo Meta com conta autorizada e mensagem real, repetição de evento, assinatura inválida, expiração/revogação e isolamento de duas contas.
-- Preview e layout mobile, publicação na Abacus original e verificação de logs/dados após publicação.
-
-Não há comprovação de integração WhatsApp ativa nem de atualização do site publicado. Nenhum serviço novo foi contratado e nenhuma hospedagem alternativa foi criada.
+Não há comprovação de WhatsApp ativo em produção. Nenhum serviço novo foi contratado, nenhum domínio foi alterado e nenhuma hospedagem alternativa foi criada.
