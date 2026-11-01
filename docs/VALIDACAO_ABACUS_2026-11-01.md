@@ -36,9 +36,16 @@ O teste encontrou falha na comparação de origem atrás do proxy. A correção 
 
 ## E. Meta
 
-Nenhuma credencial, permissão ou aprovação Meta foi configurada ou confirmada. O acesso ao Meta for Developers chegou à tela de autenticação, com opções Facebook ou Conta Meta gerenciada.
+Autenticação e cadastro no Meta for Developers concluídos pelo titular. Com autorizações explícitas, foram criados:
 
-É necessário acesso de um responsável autorizado ao aplicativo/portfólio empresarial, confirmar a versão vigente de Embedded Signup e permissões para onboarding de outras empresas, configurar o callback HTTPS e campo messages, e validar o fluxo com uma conta autorizada.
+- Portfólio empresarial **LeadUp**, ID `1946288456346122`, ainda **não verificado**.
+- Aplicativo **LeadUp**, ID `1447888187480198`, caso de uso oficial WhatsApp, vinculado ao portfólio; **não publicado** na Meta.
+
+A criação do app foi confirmada pelo painel autenticado. Foram informados e salvos o domínio `leadup.abacusai.app`, a URL de privacidade existente `/privacidade` e a URL de termos existente `/termos`. A política pública ainda se identifica como texto-base e indica `contato@leadup.com.br`, cuja operação não foi confirmada: exige revisão do responsável antes do envio para análise. Não foi cadastrada URL de exclusão, pois não existe um procedimento validado.
+
+App Secret permanece mascarado; nenhum token ou segredo Meta foi copiado ao repositório ou configurado na Abacus. Não há permissões avançadas ou aprovação confirmadas. O primeiro acesso ao ambiente WhatsApp requer aceitar os Termos da Plataforma WhatsApp Business e os Termos da Cloud API; essa etapa específica ainda não foi aceita. Nenhum número de teste foi provisionado ou mensagem real enviada/recebida.
+
+O painel confirma a exigência de verificação empresarial antes de acesso a dados de outras empresas e apresenta o onboarding como Provedor de Tecnologia. Ainda é necessário concluir esses requisitos, confirmar a versão vigente de Embedded Signup e permissões, configurar o callback HTTPS e campo messages, e validar o fluxo com uma conta autorizada.
 
 Variáveis necessárias no cofre seguro do projeto original: `META_APP_ID`, `META_APP_SECRET`, `META_EMBEDDED_SIGNUP_CONFIG_ID`, `META_GRAPH_API_VERSION`, `META_WEBHOOK_VERIFY_TOKEN`, `WHATSAPP_TOKEN_ENCRYPTION_KEY`, `LEADUP_PUBLIC_ORIGIN`. Preservar `DATABASE_URL`, `AUTH_SECRET` e `NEXTAUTH_SECRET` existentes. Para o domínio atual, a origem pública é `https://leadup.abacusai.app`.
 
@@ -84,7 +91,7 @@ Rollback planejado: manter a versão Abacus implantada e a cópia privada anteri
 
 ## I. Pendências
 
-1. Autenticação de responsável autorizado na Meta e validação do aplicativo/permissões/conta de teste.
+1. Aceitação específica dos termos WhatsApp/Cloud API, verificação do portfólio, requisitos de Provedor de Tecnologia, revisão dos textos legais, configuração do app/permissões e conta de teste autorizada. App e portfólio já criados; integração real ainda pendente.
 2. Implementar e validar ciclo completo de expiração, revogação e reautorização antes de oferecer integração completa.
 3. Confirmar acesso de login ao LeadUp no preview/publicação e revisar layout mobile.
 4. Confirmar mecanismo de checkpoint/publicação do código atualizado no projeto original, sem consumir créditos pagos adicionais.
