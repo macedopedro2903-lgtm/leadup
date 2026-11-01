@@ -36,6 +36,7 @@ export function FunilClient({ initialLeads }: { initialLeads: Lead[] }) {
     setError(null)
     const prev = leads
     setLeads((ls) => ls.map((l) => (l.id === id ? { ...l, status, updatedAt: new Date().toISOString() } : l)))
+    try {
     const res = await fetch(`/api/leads/${id}`, {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }),
     })
@@ -47,6 +48,7 @@ export function FunilClient({ initialLeads }: { initialLeads: Lead[] }) {
       return
     }
     router.refresh()
+    }catch{setError('Erro de conexão. Tente novamente.');setLeads(prev)}finally{setSavingId(null)}
   }
 
   if (leads.length === 0) {

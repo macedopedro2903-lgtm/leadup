@@ -45,22 +45,28 @@ export function ConfiguracoesClient(props: Props) {
     e.preventDefault()
     setProfileErr(null)
     setSavingProfile(true)
+    try {
     const res = await fetch('/api/profile', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(profile) })
     setSavingProfile(false)
     if (!res.ok) { const d = await res.json().catch(() => ({})); setProfileErr(d?.error ?? 'Erro ao salvar.'); return }
     setEditOpen(false)
     router.refresh()
+    }catch{setProfileErr('Erro de conexão. Tente novamente.')}finally{setSavingProfile(false)}
   }
 
   async function savePassword(e: React.FormEvent) {
     e.preventDefault()
     setPwErr(null); setPwOk(false)
     setSavingPw(true)
+    try {
     const res = await fetch('/api/profile', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(pw) })
     setSavingPw(false)
     if (!res.ok) { const d = await res.json().catch(() => ({})); setPwErr(d?.error ?? 'Erro ao alterar senha.'); return }
     setPwOk(true)
     setPw({ currentPassword: '', newPassword: '' })
+    router.push('/login')
+    router.refresh()
+    }catch{setPwErr('Erro de conexão. Tente novamente.')}finally{setSavingPw(false)}
   }
 
   function subscribe() {

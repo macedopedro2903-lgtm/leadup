@@ -36,6 +36,7 @@ export function LeadsClient({ initialLeads, openNew }: { initialLeads: Lead[]; o
   const [editLead, setEditLead] = useState<LeadData | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [error,setError]=useState('')
 
   const refresh = useCallback(async () => {
     const res = await fetch('/api/leads')
@@ -71,10 +72,14 @@ export function LeadsClient({ initialLeads, openNew }: { initialLeads: Lead[]; o
   async function confirmDelete() {
     if (!deleteId) return
     setDeleting(true)
+    setError('')
+    try {
     const res = await fetch(`/api/leads/${deleteId}`, { method: 'DELETE' })
     setDeleting(false)
     setDeleteId(null)
-    if (res.ok) refresh()
+    if (res.ok) await refresh()
+    else setError((await res.json()).error??'Não foi possível excluir.')
+    }catch{setError('Erro de conexão. Tente novamente.')}finally{setDeleting(false)}
   }
 
   return (
@@ -101,6 +106,7 @@ export function LeadsClient({ initialLeads, openNew }: { initialLeads: Lead[]; o
         </Select>
       </div>
 
+      {error&&<p role="alert" className="text-sm text-destructive">{error}</p>}
       {leads.length === 0 ? (
         <Card><CardContent className="flex flex-col items-center justify-center py-16 text-center">
           <p className="font-display text-lg font-semibold">Seu primeiro cliente começa aqui.</p>

@@ -11,7 +11,7 @@ const schema = z.object({
   businessName: z.string().trim().optional().nullable(),
   whatsapp: z.string().trim().optional().nullable(),
   currentPassword: z.string().optional(),
-  newPassword: z.string().min(6).optional(),
+  newPassword: z.string().min(6).refine(v=>Buffer.byteLength(v)<=72).optional(),
 })
 
 export async function PATCH(req: Request) {
@@ -42,9 +42,11 @@ export async function PATCH(req: Request) {
     if (!ok) {
       return NextResponse.json({ error: 'Senha atual incorreta.' }, { status: 400 })
     }
-    updateData.hashedPassword = await bcrypt.hash(data.newPassword, 10)
+    updateData.hashedPassword = await bcrypt.hash(data.newPassword, 12)
+    updateData.sessionVersion = {increment:1}
   }
 
-  await prisma.user.update({ where: { id: userId }, data: updateData })
+  const changed=await prisma.user.updateMany({ where: { id: userId, ...(data.newPassword?{hashedPassword:user.hashedPassword}:{}) }, data: updateData })
+  if(changed.count!==1)return NextResponse.json({error:'A conta foi alterada. Entre novamente e tente outra vez.'},{status:409})
   return NextResponse.json({ ok: true })
 }
