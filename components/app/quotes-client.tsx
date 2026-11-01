@@ -24,13 +24,13 @@ export function QuotesClient({leads,quotes}:{leads:{id:string;name:string}[];quo
       const response=await fetch(editing?`/api/orcamentos/${editing.id}`:'/api/orcamentos',{method:editing?'PATCH':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})
       const result=await response.json()
       if(!response.ok)throw new Error(result.error||'Não foi possível salvar.')
-      form.reset();setEditing(null);router.refresh()
+      form.reset();form.dataset.dirty='false';setEditing(null);router.refresh()
     }catch(error){setError(error instanceof Error?error.message:'Erro de conexão.')}finally{setBusy(false)}
   }
   return <div className="space-y-6 max-w-4xl">
     <div><h1 className="font-display text-2xl font-bold">Orçamentos</h1><p className="text-sm text-muted-foreground">Registre propostas e acompanhe o aceite. Alterações ficam no histórico do lead.</p></div>
     <Card><CardHeader><CardTitle>{editing?'Editar orçamento':'Novo orçamento'}</CardTitle></CardHeader><CardContent>
-      {leads.length===0?<p>Adicione um <Link className="underline" href="/app/leads?novo=1">lead</Link> antes de criar seu orçamento.</p>:<form key={editing?.id??'new'} onSubmit={save} className="space-y-4">
+      {leads.length===0?<p>Adicione um <Link className="underline" href="/app/leads?novo=1">lead</Link> antes de criar seu orçamento.</p>:<form key={editing?.id??'new'} onSubmit={save} onChange={event=>{event.currentTarget.dataset.dirty='true'}} data-preserve-draft className="space-y-4">
         <div className="grid sm:grid-cols-2 gap-4">
           <div><Label htmlFor="quote-lead">Lead</Label><select id="quote-lead" name="leadId" defaultValue={editing?.leadId??''} required disabled={!!editing} className="w-full rounded-md border bg-background p-2"><option value="">Selecione</option>{leads.map(l=><option key={l.id} value={l.id}>{l.name}</option>)}</select>{editing&&<input type="hidden" name="leadId" value={editing.leadId}/>}</div>
           <div><Label htmlFor="quote-title">Título</Label><Input id="quote-title" name="title" required maxLength={160} defaultValue={editing?.title}/></div>
