@@ -11,6 +11,8 @@ export const APP_CONFIG = {
   LOGIN_URL: '/login',
   SIGNUP_URL: '/cadastro',
   // Limites e planos
+  MAX_IMPORT_ROWS: 1000,
+  MAX_IMPORT_FILE_BYTES: 2 * 1024 * 1024,
   FREE_PLAN_LIMIT: 10,
   FREE_ACTIVE_LEADS_LIMIT: 10,
   FREE_AI_GENERATIONS: 5,

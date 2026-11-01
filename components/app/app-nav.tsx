@@ -4,14 +4,16 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { signOut } from 'next-auth/react'
 import { cn } from '@/lib/utils'
-import { LayoutDashboard, Users, KanbanSquare, MessageSquareText, Settings, LogOut, Shield, TrendingUp } from 'lucide-react'
+import { LayoutDashboard, Users, KanbanSquare, MessageSquareText, Settings, LogOut, Shield, TrendingUp, FileUp } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 
 const NAV = [
   { href: '/app', label: 'Dashboard', icon: LayoutDashboard, exact: true },
   { href: '/app/leads', label: 'Leads', icon: Users },
+  { href: '/app/importar', label: 'Importar leads', icon: FileUp },
   { href: '/app/funil', label: 'Funil', icon: KanbanSquare },
+  { href: '/app/orcamentos', label: 'Orçamentos', icon: FileUp },
   { href: '/app/followups', label: 'Follow-ups', icon: MessageSquareText },
   { href: '/app/configuracoes', label: 'Configurações', icon: Settings },
 ]

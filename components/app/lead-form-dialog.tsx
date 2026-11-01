@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -40,12 +40,14 @@ export function LeadFormDialog({
   onSaved: () => void
 }) {
   const editing = !!lead?.id
-  const [form, setForm] = useState<LeadData>({ name: '', phone: '', service: '', value: null, status: 'NOVO', notes: '', nextFollowup: '' })
-  const [valueStr, setValueStr] = useState('')
+  const [form, setForm] = useState<LeadData>(() => lead ? {...lead} : { name: '', phone: '', service: '', value: null, status: 'NOVO', notes: '', nextFollowup: '' })
+  const [valueStr, setValueStr] = useState(lead?.value != null ? String(lead.value).replace('.', ',') : '')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
-  useEffect(() => {
+  const [previousInput, setPreviousInput] = useState({open, lead})
+  if (previousInput.open !== open || previousInput.lead !== lead) {
+    setPreviousInput({open, lead})
     if (open) {
       setError(null)
       if (lead) {
@@ -56,7 +58,7 @@ export function LeadFormDialog({
         setValueStr('')
       }
     }
-  }, [open, lead])
+  }
 
   function update<K extends keyof LeadData>(key: K, value: LeadData[K]) {
     setForm((f) => ({ ...f, [key]: value }))

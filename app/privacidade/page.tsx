@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { Logo } from '@/components/leadup/logo';
 import { APP_CONFIG } from '@/config/app';
 import type { Metadata } from 'next';
@@ -12,9 +13,9 @@ export default function PrivacidadePage() {
     <div className="min-h-screen bg-background">
       <header className="border-b border-border/50 py-4">
         <div className="max-w-[800px] mx-auto px-4 sm:px-6">
-          <a href="/">
+          <Link href="/">
             <Logo className="h-6 w-auto" />
-          </a>
+          </Link>
         </div>
       </header>
       <main className="max-w-[800px] mx-auto px-4 sm:px-6 py-12 sm:py-16">
@@ -70,7 +71,7 @@ export default function PrivacidadePage() {
         </div>
 
         <div className="mt-12 pt-8 border-t border-border/50 text-center">
-          <a href="/" className="text-sm text-primary hover:underline">← Voltar para o início</a>
+          <Link href="/" className="text-sm text-primary hover:underline">← Voltar para o início</Link>
         </div>
       </main>
     </div>

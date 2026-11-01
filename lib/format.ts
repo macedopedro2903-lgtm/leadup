@@ -13,14 +13,16 @@ export function daysSince(date: Date | string | null | undefined): number | null
 }
 
 export const LEAD_STATUS_LABEL: Record<string, string> = {
-  NOVO: 'Novo',
+  NOVO: 'Novo lead',
+  PRIMEIRO_CONTATO: 'Primeiro contato',
+  AGUARDANDO_RESPOSTA: 'Aguardando resposta',
   ORCAMENTO_ENVIADO: 'Orçamento enviado',
   NEGOCIANDO: 'Negociando',
   FECHADO: 'Fechado',
   PERDIDO: 'Perdido',
 }
 
-export const LEAD_STATUS_ORDER = ['NOVO', 'ORCAMENTO_ENVIADO', 'NEGOCIANDO', 'FECHADO', 'PERDIDO'] as const
+export const LEAD_STATUS_ORDER = ['NOVO', 'PRIMEIRO_CONTATO', 'ORCAMENTO_ENVIADO', 'NEGOCIANDO', 'AGUARDANDO_RESPOSTA', 'FECHADO', 'PERDIDO'] as const
 
 export const TONE_LABEL: Record<string, string> = {
   AMIGAVEL: 'Amigável',

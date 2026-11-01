@@ -1,7 +1,6 @@
 generator client {
     provider = "prisma-client-js"
     binaryTargets = ["native", "linux-musl-arm64-openssl-3.0.x"]
-    output = "/home/ubuntu/leadup_site/nextjs_space/node_modules/.prisma/client"
 }
 
 datasource db {
@@ -22,6 +21,8 @@ enum PlanStatus {
 
 enum LeadStatus {
   NOVO
+  PRIMEIRO_CONTATO
+  AGUARDANDO_RESPOSTA
   ORCAMENTO_ENVIADO
   NEGOCIANDO
   FECHADO
@@ -60,6 +61,12 @@ model User {
   followups     Followup[]
   aiUsage       AiUsage[]
   planRequests  PlanRequest[]
+  whatsappConnection WhatsAppConnection?
+  importAudits   LeadImportAudit[]
+  quotes Quote[]
+  activities LeadActivity[]
+  passwordResets PasswordReset[]
+  sessionVersion Int @default(0)
   accounts      Account[]
   sessions      Session[]
 
@@ -71,6 +78,14 @@ model Lead {
   userId       String
   name         String
   phone        String?
+  normalizedPhone String?
+  company      String?
+  email        String?
+  importOrigin String?
+  source       String @default("MANUAL")
+  createdAutomatically Boolean @default(false)
+  lastContactAt DateTime?
+  lastMessageAt DateTime?
   service      String?
   value        Float?
   status       LeadStatus @default(NOVO)
@@ -81,9 +96,15 @@ model Lead {
 
   user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   followups Followup[]
+  messages LeadMessage[]
+  quotes Quote[]
+  activities LeadActivity[]
+  followupEnabled Boolean @default(true)
+  followupAfterDays Int @default(3)
 
   @@index([userId])
   @@index([userId, status])
+  @@unique([userId, normalizedPhone])
 }
 
 model Followup {
@@ -173,4 +194,112 @@ model Session {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+model LeadImportAudit {
+  id        String   @id @default(cuid())
+  userId    String
+  fileName  String
+  total     Int
+  created   Int
+  updated   Int
+  skipped   Int
+  errors    Int
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+/** Incoming messages are written only by a trusted, authenticated provider integration. */
+model LeadMessage {
+  id                String   @id @default(cuid())
+  userId            String
+  leadId            String
+  providerMessageId String
+  body              String
+  receivedAt        DateTime @default(now())
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, providerMessageId])
+  @@index([userId, leadId, receivedAt])
+}
+
+
+/** A unique, explicitly authorized Cloud API phone per LeadUp user. */
+model WhatsAppConnection {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wabaId            String
+  phoneNumberId     String   @unique
+  displayPhone      String?
+  encryptedToken    String
+  status            WhatsAppConnectionStatus @default(PENDING_REGISTRATION)
+  tokenExpiresAt    DateTime?
+  lastCheckedAt     DateTime?
+  connectedAt       DateTime @default(now())
+  activatedAt       DateTime?
+  lastInboundAt     DateTime?
+  lastError         String?
+  skippedMessages   Int      @default(0)
+  updatedAt         DateTime @updatedAt
+
+  @@index([wabaId])
+}
+
+enum WhatsAppConnectionStatus {
+  PENDING_REGISTRATION
+  CONNECTED
+  REAUTH_REQUIRED
+}
+
+model Quote {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  leadId String
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  title String
+  description String?
+  amount Decimal @db.Decimal(12, 2)
+  status QuoteStatus @default(RASCUNHO)
+  validUntil DateTime?
+  version Int @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([userId, createdAt])
+  @@index([userId, leadId])
+}
+
+enum QuoteStatus {
+  RASCUNHO
+  ENVIADO
+  ACEITO
+  RECUSADO
+}
+
+model LeadActivity {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  leadId String
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  kind String
+  summary String
+  createdAt DateTime @default(now())
+  @@index([userId, leadId, createdAt])
+}
+
+model PasswordReset {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String @unique
+  expiresAt DateTime
+  usedAt DateTime?
+  createdAt DateTime @default(now())
+  @@index([userId, createdAt])
 }

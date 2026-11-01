@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
 import { Loader2, Crown, LogOut, Phone } from 'lucide-react'
+import { WhatsAppConnectionCard } from '@/components/app/whatsapp-connection-card'
 
 type Props = {
   user: { name: string; email: string; businessName: string; whatsapp: string }
@@ -44,22 +45,28 @@ export function ConfiguracoesClient(props: Props) {
     e.preventDefault()
     setProfileErr(null)
     setSavingProfile(true)
+    try {
     const res = await fetch('/api/profile', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(profile) })
     setSavingProfile(false)
     if (!res.ok) { const d = await res.json().catch(() => ({})); setProfileErr(d?.error ?? 'Erro ao salvar.'); return }
     setEditOpen(false)
     router.refresh()
+    }catch{setProfileErr('Erro de conexão. Tente novamente.')}finally{setSavingProfile(false)}
   }
 
   async function savePassword(e: React.FormEvent) {
     e.preventDefault()
     setPwErr(null); setPwOk(false)
     setSavingPw(true)
+    try {
     const res = await fetch('/api/profile', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(pw) })
     setSavingPw(false)
     if (!res.ok) { const d = await res.json().catch(() => ({})); setPwErr(d?.error ?? 'Erro ao alterar senha.'); return }
     setPwOk(true)
     setPw({ currentPassword: '', newPassword: '' })
+    router.push('/login')
+    router.refresh()
+    }catch{setPwErr('Erro de conexão. Tente novamente.')}finally{setSavingPw(false)}
   }
 
   function subscribe() {
@@ -134,6 +141,9 @@ export function ConfiguracoesClient(props: Props) {
           </Button>
         </CardContent>
       </Card>
+
+      {/* WhatsApp oficial — autorização individual de cada usuário */}
+      <WhatsAppConnectionCard />
 
       {/* Editar perfil */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>

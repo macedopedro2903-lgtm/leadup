@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
-import { PanelLeft } from 'lucide-react'
+import { PanelLeft, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 export function AppShell({
@@ -30,12 +30,15 @@ export function AppShell({
 
       {/* Sidebar */}
       <aside
+        id="leadup-navigation"
+        aria-label="Navegação do aplicativo"
         className={cn(
           'fixed inset-y-0 left-0 z-50 w-64 border-r bg-card transition-transform duration-normal ease-out lg:translate-x-0',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
-        <div className="flex h-full flex-col overflow-y-auto p-4">
+        <div className="flex h-full flex-col overflow-y-auto p-4" onClick={event=>{if((event.target as HTMLElement).closest('a'))setSidebarOpen(false)}}>
+          <Button className="self-end lg:hidden" variant="ghost" size="icon" aria-label="Fechar menu" onClick={()=>setSidebarOpen(false)}><X className="h-5 w-5"/></Button>
           {sidebar}
         </div>
       </aside>
@@ -48,6 +51,9 @@ export function AppShell({
             variant="ghost"
             size="icon"
             className="lg:hidden"
+            aria-label="Abrir menu"
+            aria-controls="leadup-navigation"
+            aria-expanded={sidebarOpen}
             onClick={() => setSidebarOpen(true)}
           >
             <PanelLeft className="h-5 w-5" />

@@ -15,6 +15,8 @@ type Lead = {
 
 const COLUMN_LABEL: Record<string, string> = {
   NOVO: 'Novos',
+  PRIMEIRO_CONTATO: 'Primeiro contato',
+  AGUARDANDO_RESPOSTA: 'Aguardando resposta',
   ORCAMENTO_ENVIADO: 'Orçamento enviado',
   NEGOCIANDO: 'Negociando',
   FECHADO: 'Fechados',
@@ -24,6 +26,8 @@ const COLUMN_LABEL: Record<string, string> = {
 export function FunilClient({ initialLeads }: { initialLeads: Lead[] }) {
   const router = useRouter()
   const [leads, setLeads] = useState<Lead[]>(initialLeads)
+  const [previousLeads,setPreviousLeads]=useState(initialLeads)
+  if(previousLeads!==initialLeads){setPreviousLeads(initialLeads);setLeads(initialLeads)}
   const [savingId, setSavingId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -32,6 +36,7 @@ export function FunilClient({ initialLeads }: { initialLeads: Lead[] }) {
     setError(null)
     const prev = leads
     setLeads((ls) => ls.map((l) => (l.id === id ? { ...l, status, updatedAt: new Date().toISOString() } : l)))
+    try {
     const res = await fetch(`/api/leads/${id}`, {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }),
     })
@@ -43,6 +48,7 @@ export function FunilClient({ initialLeads }: { initialLeads: Lead[] }) {
       return
     }
     router.refresh()
+    }catch{setError('Erro de conexão. Tente novamente.');setLeads(prev)}finally{setSavingId(null)}
   }
 
   if (leads.length === 0) {

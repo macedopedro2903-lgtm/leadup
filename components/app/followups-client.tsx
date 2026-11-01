@@ -75,6 +75,7 @@ export function FollowupsClient({
     if (!message.trim()) { setError('Escreva ou gere uma mensagem antes de salvar.'); return }
     setError(null)
     setSaving(true)
+    try {
     const res = await fetch('/api/followups', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ leadId, message, tone, generatedByAi }),
@@ -88,6 +89,7 @@ export function FollowupsClient({
     setSaved(true)
     router.refresh()
     setTimeout(() => setSaved(false), 2500)
+    }catch{setError('Erro de conexão. Sua mensagem continua disponível para tentar novamente.')}finally{setSaving(false)}
   }
 
   const waUrl = selectedLead ? buildWhatsappUrl(selectedLead.phone, message) : ''

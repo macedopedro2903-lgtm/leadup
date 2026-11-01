@@ -39,6 +39,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         token.id = (user as { id: string }).id
         token.isAdmin = (user as { isAdmin?: boolean }).isAdmin ?? false
+        const account=await prisma.user.findUnique({where:{id:token.id as string},select:{sessionVersion:true}})
+        token.sessionVersion=account?.sessionVersion??0
+      }
+      if(token.id){
+        const account=await prisma.user.findUnique({where:{id:token.id as string},select:{sessionVersion:true}})
+        if(!account||account.sessionVersion!==(token.sessionVersion??0))return null
       }
       return token
     },
