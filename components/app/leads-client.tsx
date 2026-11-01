@@ -10,7 +10,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { LeadFormDialog, type LeadData } from '@/components/app/lead-form-dialog'
-import { Plus, Search, Pencil, Trash2, Eye, MessageSquareText } from 'lucide-react'
+import { Plus, Search, Pencil, Trash2, Eye, MessageSquareText, FileUp } from 'lucide-react'
 import { formatBRL, daysSince, LEAD_STATUS_LABEL, LEAD_STATUS_ORDER } from '@/lib/format'
 import { buildWhatsappUrl } from '@/lib/whatsapp'
 
@@ -82,7 +82,7 @@ export function LeadsClient({ initialLeads, openNew }: { initialLeads: Lead[]; o
           <h1 className="font-display text-2xl font-bold tracking-tight">Leads</h1>
           <p className="text-sm text-muted-foreground mt-1">Gerencie suas oportunidades.</p>
         </div>
-        <Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" /> Novo lead</Button>
+        <div className="flex flex-wrap gap-2"><Button asChild variant="outline"><Link href="/app/importar"><FileUp className="mr-2 h-4 w-4" /> Importar leads</Link></Button><Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" /> Novo lead</Button></div>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">

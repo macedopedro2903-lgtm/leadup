@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { prisma } from '@/lib/db'
 import { getSessionUserId } from '@/lib/session'
 import { effectivePlan, planLimits, ACTIVE_LEAD_STATUSES } from '@/lib/plan'
+import { normalizePhone } from '@/lib/whatsapp'
 
 export const dynamic = 'force-dynamic'
 
@@ -49,6 +50,19 @@ export async function POST(req: Request) {
   if (!user) return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
 
   const data = parsed.data
+  const normalizedPhone = data.phone ? normalizePhone(data.phone) : null
+  if (data.phone && !normalizedPhone) {
+    return NextResponse.json({ error: 'Telefone inválido. Informe DDD e número brasileiro.' }, { status: 400 })
+  }
+  if (normalizedPhone) {
+    const matches = await prisma.lead.findMany({
+      where: { userId, OR: [{ normalizedPhone }, { normalizedPhone: null }] },
+      select: { id: true, phone: true, normalizedPhone: true },
+    })
+    if (matches.some(l => (l.normalizedPhone || normalizePhone(l.phone)) === normalizedPhone)) {
+      return NextResponse.json({ error: 'Já existe um lead com este telefone.' }, { status: 409 })
+    }
+  }
   const status = data.status ?? 'NOVO'
   const isActive = (ACTIVE_LEAD_STATUSES as readonly string[]).includes(status)
 
@@ -76,6 +90,7 @@ export async function POST(req: Request) {
       userId,
       name: data.name,
       phone: data.phone || null,
+      normalizedPhone,
       service: data.service || null,
       value: parseValue(data.value),
       status,

@@ -1,7 +1,6 @@
 generator client {
     provider = "prisma-client-js"
     binaryTargets = ["native", "linux-musl-arm64-openssl-3.0.x"]
-    output = "/home/ubuntu/leadup_site/nextjs_space/node_modules/.prisma/client"
 }
 
 datasource db {
@@ -60,6 +59,8 @@ model User {
   followups     Followup[]
   aiUsage       AiUsage[]
   planRequests  PlanRequest[]
+  whatsappConnection WhatsAppConnection?
+  importAudits   LeadImportAudit[]
   accounts      Account[]
   sessions      Session[]
 
@@ -71,6 +72,14 @@ model Lead {
   userId       String
   name         String
   phone        String?
+  normalizedPhone String?
+  company      String?
+  email        String?
+  importOrigin String?
+  source       String @default("MANUAL")
+  createdAutomatically Boolean @default(false)
+  lastContactAt DateTime?
+  lastMessageAt DateTime?
   service      String?
   value        Float?
   status       LeadStatus @default(NOVO)
@@ -81,9 +90,11 @@ model Lead {
 
   user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   followups Followup[]
+  messages LeadMessage[]
 
   @@index([userId])
   @@index([userId, status])
+  @@unique([userId, normalizedPhone])
 }
 
 model Followup {
@@ -173,4 +184,61 @@ model Session {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+model LeadImportAudit {
+  id        String   @id @default(cuid())
+  userId    String
+  fileName  String
+  total     Int
+  created   Int
+  updated   Int
+  skipped   Int
+  errors    Int
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+/** Incoming messages are written only by a trusted, authenticated provider integration. */
+model LeadMessage {
+  id                String   @id @default(cuid())
+  userId            String
+  leadId            String
+  providerMessageId String
+  body              String
+  receivedAt        DateTime @default(now())
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, providerMessageId])
+  @@index([userId, leadId, receivedAt])
+}
+
+
+/** A unique, explicitly authorized Cloud API phone per LeadUp user. */
+model WhatsAppConnection {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wabaId            String
+  phoneNumberId     String   @unique
+  displayPhone      String?
+  encryptedToken    String
+  status            WhatsAppConnectionStatus @default(PENDING_REGISTRATION)
+  connectedAt       DateTime @default(now())
+  activatedAt       DateTime?
+  lastInboundAt     DateTime?
+  lastError         String?
+  skippedMessages   Int      @default(0)
+  updatedAt         DateTime @updatedAt
+
+  @@index([wabaId])
+}
+
+enum WhatsAppConnectionStatus {
+  PENDING_REGISTRATION
+  CONNECTED
 }

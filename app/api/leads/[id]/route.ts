@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { prisma } from '@/lib/db'
 import { getSessionUserId } from '@/lib/session'
 import { effectivePlan, planLimits, ACTIVE_LEAD_STATUSES } from '@/lib/plan'
+import { normalizePhone } from '@/lib/whatsapp'
 
 export const dynamic = 'force-dynamic'
 
@@ -53,6 +54,19 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     return NextResponse.json({ error: parsed.error.issues[0]?.message ?? 'Dados inválidos.' }, { status: 400 })
   }
   const data = parsed.data
+  const normalizedPhone = data.phone !== undefined ? normalizePhone(data.phone) : lead.normalizedPhone
+  if (data.phone && !normalizedPhone) {
+    return NextResponse.json({ error: 'Telefone inválido. Informe DDD e número brasileiro.' }, { status: 400 })
+  }
+  if (normalizedPhone && normalizedPhone !== lead.normalizedPhone) {
+    const matches = await prisma.lead.findMany({
+      where: { userId, id: { not: id }, OR: [{ normalizedPhone }, { normalizedPhone: null }] },
+      select: { phone: true, normalizedPhone: true },
+    })
+    if (matches.some(l => (l.normalizedPhone || normalizePhone(l.phone)) === normalizedPhone)) {
+      return NextResponse.json({ error: 'Já existe outro lead com este telefone.' }, { status: 409 })
+    }
+  }
 
   // Se está reativando um lead (de FECHADO/PERDIDO para ativo), respeitar limite Free.
   if (data.status && (ACTIVE_LEAD_STATUSES as readonly string[]).includes(data.status)) {
@@ -81,7 +95,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     where: { id },
     data: {
       ...(data.name !== undefined ? { name: data.name } : {}),
-      ...(data.phone !== undefined ? { phone: data.phone || null } : {}),
+      ...(data.phone !== undefined ? { phone: data.phone || null, normalizedPhone: normalizedPhone || null } : {}),
       ...(data.service !== undefined ? { service: data.service || null } : {}),
       ...(data.value !== undefined ? { value: parseValue(data.value) } : {}),
       ...(data.status !== undefined ? { status: data.status } : {}),

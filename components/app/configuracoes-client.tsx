@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
 import { Loader2, Crown, LogOut, Phone } from 'lucide-react'
+import { WhatsAppConnectionCard } from '@/components/app/whatsapp-connection-card'
 
 type Props = {
   user: { name: string; email: string; businessName: string; whatsapp: string }
@@ -134,6 +135,9 @@ export function ConfiguracoesClient(props: Props) {
           </Button>
         </CardContent>
       </Card>
+
+      {/* WhatsApp oficial — autorização individual de cada usuário */}
+      <WhatsAppConnectionCard />
 
       {/* Editar perfil */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>

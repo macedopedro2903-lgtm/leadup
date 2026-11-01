@@ -39,3 +39,10 @@ next-env.d.ts
 
 # Arquivos internos da plataforma
 .abacus*
+
+# Protect all environment variants
+.env.*
+!.env.example
+
+# Local dependency symlink
+/node_modules

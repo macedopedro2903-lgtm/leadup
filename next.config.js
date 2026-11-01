@@ -8,7 +8,7 @@ const nextConfig = {
   productionBrowserSourceMaps: false,
   outputFileTracingRoot: process.env.NEXT_OUTPUT_MODE ? path.join(__dirname, '../') : '/',
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
   images: { unoptimized: true },
   // Dev chunk URLs are not content-hashed, so a cached copy outlives an edit.
