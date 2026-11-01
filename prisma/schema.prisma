@@ -1,0 +1,176 @@
+generator client {
+    provider = "prisma-client-js"
+    binaryTargets = ["native", "linux-musl-arm64-openssl-3.0.x"]
+    output = "/home/ubuntu/leadup_site/nextjs_space/node_modules/.prisma/client"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+enum Plan {
+  FREE
+  START
+}
+
+enum PlanStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum LeadStatus {
+  NOVO
+  ORCAMENTO_ENVIADO
+  NEGOCIANDO
+  FECHADO
+  PERDIDO
+}
+
+enum PlanRequestStatus {
+  PENDING
+  ACTIVE
+  REJECTED
+}
+
+enum FollowupTone {
+  AMIGAVEL
+  PROFISSIONAL
+  DIRETO
+}
+
+model User {
+  id             String      @id @default(cuid())
+  name           String?
+  email          String      @unique
+  emailVerified  DateTime?
+  image          String?
+  hashedPassword String?
+  businessName   String?
+  whatsapp       String?
+  plan           Plan        @default(FREE)
+  planStatus     PlanStatus  @default(INACTIVE)
+  planExpiresAt  DateTime?
+  isAdmin        Boolean     @default(false)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  leads         Lead[]
+  followups     Followup[]
+  aiUsage       AiUsage[]
+  planRequests  PlanRequest[]
+  accounts      Account[]
+  sessions      Session[]
+
+  @@index([email])
+}
+
+model Lead {
+  id           String     @id @default(cuid())
+  userId       String
+  name         String
+  phone        String?
+  service      String?
+  value        Float?
+  status       LeadStatus @default(NOVO)
+  notes        String?
+  nextFollowup DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  followups Followup[]
+
+  @@index([userId])
+  @@index([userId, status])
+}
+
+model Followup {
+  id            String        @id @default(cuid())
+  userId        String
+  leadId        String
+  message       String
+  tone          FollowupTone?
+  generatedByAi Boolean       @default(false)
+  createdAt     DateTime      @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([leadId])
+}
+
+model AiUsage {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, createdAt])
+}
+
+model PlanRequest {
+  id        String            @id @default(cuid())
+  userId    String
+  plan      Plan              @default(START)
+  status    PlanRequestStatus @default(PENDING)
+  createdAt DateTime          @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+}
+
+model PlanChangeLog {
+  id        String   @id @default(cuid())
+  adminId   String
+  userId    String
+  oldPlan   String
+  newPlan   String
+  note      String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model AppSetting {
+  key   String @id
+  value String
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
