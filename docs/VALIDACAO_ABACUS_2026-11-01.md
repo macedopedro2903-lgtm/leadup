@@ -45,7 +45,11 @@ A criação do app foi confirmada pelo painel autenticado. Foram informados e sa
 
 App Secret permanece mascarado; nenhum token ou segredo Meta foi copiado ao repositório ou configurado na Abacus. Não há permissões avançadas ou aprovação confirmadas. Os Termos da Plataforma WhatsApp Business e da Cloud API foram aceitos com confirmação explícita do titular. O painel provisionou o número de teste `+1 (555) 606-2760`, Phone Number ID `1510511172140395`, conta de mensagens `2170374713570601`. O exemplo oficial exibido pelo painel usa Graph API `v25.0`. O campo de token ainda informa "Not generated yet"; nenhuma mensagem real foi enviada ou recebida.
 
-O onboarding de Provedor de Tecnologia foi aberto na opção independente, apropriada ao acesso direto sem um parceiro contratado. O botão final exige os Termos de Provedor de Tecnologia e ainda não foi acionado. A configuração de Login para Empresas foi inspecionada, mas somente a variação Geral estava disponível: nenhuma configuração genérica foi criada como substituto de Embedded Signup.
+Os Termos de Provedor de Tecnologia foram aceitos após confirmação específica do titular e o onboarding independente foi iniciado. Isso não equivale à aprovação final. O configurador do Embedded Signup passou a estar disponível e confirma a versão v4, com informações de sessão versão 3.
+
+Foi criada pelo configurador oficial a configuração **LeadUp WhatsApp**, ID `2580937555653151`, que pede `whatsapp_business_management` e `whatsapp_business_messaging` no consentimento de cada empresa e indica token de usuário do sistema sem expiração pré-definida. Criar a configuração não concede acesso a uma conta de cliente. O domínio `https://leadup.abacusai.app` foi salvo na lista de permissão do SDK; o painel confirmou um domínio configurado. Nenhuma configuração genérica foi criada como substituto de Embedded Signup.
+
+O painel diz explicitamente que não é possível integrar usuários antes da verificação empresarial, e que a produção exige análise do app e verificação de acesso. Para testes, usuários devem ter função no app. O app possui um administrador e nenhum desenvolvedor. A documentação exibida para empresas brasileiras inclui CNPJ, documentos de constituição ou CCMEI, entre outros aceitos pela Meta; nenhum documento empresarial foi enviado.
 
 O painel confirma a exigência de verificação empresarial antes de acesso a dados de outras empresas e apresenta o onboarding como Provedor de Tecnologia. Ainda é necessário concluir esses requisitos, confirmar a versão vigente de Embedded Signup e permissões, configurar o callback HTTPS e campo messages, e validar o fluxo com uma conta autorizada.
 
@@ -93,7 +97,7 @@ Rollback planejado: manter a versão Abacus implantada e a cópia privada anteri
 
 ## I. Pendências
 
-1. Aceitação específica dos Termos de Provedor de Tecnologia, verificação do portfólio, App Review, revisão dos textos legais, configuração do app/permissões e destinatário de teste autorizado. Termos WhatsApp/Cloud API aceitos, app/portfólio e número de teste já criados; integração real ainda pendente.
+1. Verificação empresarial pelo responsável com documentação legítima, App Review e verificação de acesso, revisão dos textos legais, configuração segura das chaves e destinatário de teste autorizado. Termos aceitos, app/portfólio, número de teste e configuração Embedded Signup v4 já criados; integração real ainda pendente.
 2. Implementar e validar ciclo completo de expiração, revogação e reautorização antes de oferecer integração completa.
 3. Confirmar acesso de login ao LeadUp no preview/publicação e revisar layout mobile.
 4. Confirmar mecanismo de checkpoint/publicação do código atualizado no projeto original, sem consumir créditos pagos adicionais.
