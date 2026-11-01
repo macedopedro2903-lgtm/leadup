@@ -28,6 +28,8 @@ type Lead = {
 export function LeadsClient({ initialLeads, openNew }: { initialLeads: Lead[]; openNew?: boolean }) {
   const router = useRouter()
   const [leads, setLeads] = useState<Lead[]>(initialLeads)
+  const [previousLeads,setPreviousLeads]=useState(initialLeads)
+  if(previousLeads!==initialLeads){setPreviousLeads(initialLeads);setLeads(initialLeads)}
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('ALL')
   const [formOpen, setFormOpen] = useState(!!openNew)

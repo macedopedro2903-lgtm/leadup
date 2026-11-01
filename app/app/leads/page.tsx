@@ -20,5 +20,5 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
     updatedAt: l.updatedAt.toISOString(),
   }))
 
-  return <LeadsClient key={leads.map(l=>`${l.id}:${l.updatedAt.toISOString()}`).join('|')} initialLeads={serialized} openNew={novo === '1'} />
+  return <LeadsClient initialLeads={serialized} openNew={novo === '1'} />
 }

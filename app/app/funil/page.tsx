@@ -10,5 +10,5 @@ export default async function FunilPage() {
   const serialized = leads.map((l) => ({
     id: l.id, name: l.name, service: l.service, value: l.value, status: l.status, updatedAt: l.updatedAt.toISOString(),
   }))
-  return <FunilClient key={leads.map(l=>`${l.id}:${l.updatedAt.toISOString()}`).join('|')} initialLeads={serialized} />
+  return <FunilClient initialLeads={serialized} />
 }

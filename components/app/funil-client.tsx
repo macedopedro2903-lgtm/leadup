@@ -26,6 +26,8 @@ const COLUMN_LABEL: Record<string, string> = {
 export function FunilClient({ initialLeads }: { initialLeads: Lead[] }) {
   const router = useRouter()
   const [leads, setLeads] = useState<Lead[]>(initialLeads)
+  const [previousLeads,setPreviousLeads]=useState(initialLeads)
+  if(previousLeads!==initialLeads){setPreviousLeads(initialLeads);setLeads(initialLeads)}
   const [savingId, setSavingId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
